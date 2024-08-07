@@ -31,15 +31,16 @@ namespace CosmosDbSchemaApi.Services
             return containers;
         }
 
-        public async Task<Dictionary<string, List<Dictionary<string, object>>>> GetContainersWithDataAsync(string databaseName)
+        public async Task<Dictionary<string, ContainerData>> GetContainersWithDataAndSchemaAsync(string databaseName)
         {
-            var containersData = new Dictionary<string, List<Dictionary<string, object>>>();
+            var containersData = new Dictionary<string, ContainerData>();
             var containerNames = await GetContainersAsync(databaseName);
 
             foreach (var containerName in containerNames)
             {
                 var container = _cosmosClient.GetContainer(databaseName, containerName);
                 var items = new List<Dictionary<string, object>>();
+                var schema = new Dictionary<string, string>();
 
                 var query = new QueryDefinition("SELECT * FROM c");
                 var iterator = container.GetItemQueryIterator<Dictionary<string, object>>(query);
@@ -48,13 +49,30 @@ namespace CosmosDbSchemaApi.Services
                 {
                     var response = await iterator.ReadNextAsync();
                     items.AddRange(response.ToList());
+
+                    if (schema.Count == 0 && items.Count > 0)
+                    {
+                        foreach (var key in items[0].Keys)
+                        {
+                            schema[key] = items[0][key]?.GetType().Name ?? "Unknown";
+                        }
+                    }
                 }
 
-                containersData.Add(containerName, items);
+                containersData.Add(containerName, new ContainerData
+                {
+                    Schema = schema,
+                    Data = items
+                });
             }
 
             return containersData;
         }
     }
 
+    public class ContainerData
+    {
+        public Dictionary<string, string> Schema { get; set; }
+        public List<Dictionary<string, object>> Data { get; set; }
+    }
 }

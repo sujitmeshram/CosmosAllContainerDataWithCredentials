@@ -10,8 +10,8 @@ namespace CosmosDbSchemaApi.Controllers
     [Route("api/[controller]")]
     public class CosmosController : ControllerBase
     {
-        [HttpPost("getContainersWithData")]
-        public async Task<IActionResult> GetContainersWithData([FromBody] CosmosCredentials credentials)
+        [HttpPost("getContainersWithDataAndSchema")]
+        public async Task<IActionResult> GetContainersWithDataAndSchema([FromBody] CosmosCredentials credentials)
         {
             if (credentials == null ||
                 string.IsNullOrWhiteSpace(credentials.AccountEndpoint) ||
@@ -22,7 +22,7 @@ namespace CosmosDbSchemaApi.Controllers
             }
 
             var cosmosService = new CosmosService(credentials.AccountEndpoint, credentials.AccountKey);
-            var containersData = await cosmosService.GetContainersWithDataAsync(credentials.DatabaseName);
+            var containersData = await cosmosService.GetContainersWithDataAndSchemaAsync(credentials.DatabaseName);
 
             return Ok(containersData);
         }
